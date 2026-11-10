@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lab-calendar",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-02",
+  "vars": {
+    "ALLOWED_ORIGINS": "https://riccardogiussani.github.io,http://127.0.0.1:3000,http://localhost:3000"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "CALENDAR", "class_name": "LabCalendar" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LabCalendar"] }]
+}

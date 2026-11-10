@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Calendario settimanale del laboratorio">
+  <meta name="calendar-api-origin" content="">
+  <title>Lab Calendar</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="vendor/calendar.js"></script>
+  <script defer src="vendor/it.js"></script>
+  <script defer src="vendor/luxon.js"></script>
+  <script defer src="vendor/calendar-zone.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M7.5 3.5v4m9-4v4m-13 3h17m-12 5h3m3 0h2"/></svg></span>
+      <span>Lab Calendar</span>
+    </div>
+    <span class="timezone">Europe/Rome</span>
+  </header>
+  <main aria-labelledby="period">
+    <div class="toolbar">
+      <nav class="navigation" aria-label="Navigazione calendario">
+        <button id="today" class="today" type="button">Oggi</button>
+        <button id="prev" class="icon-button" type="button" aria-label="Periodo precedente"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 4-6 6 6 6"/></svg></button>
+        <button id="next" class="icon-button" type="button" aria-label="Periodo successivo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 4 6 6-6 6"/></svg></button>
+      </nav>
+      <h1 id="period">Calendario</h1>
+      <div class="toolbar-end">
+        <span id="status" role="status">Caricamento…</span>
+        <button id="refresh" class="icon-button" type="button" aria-label="Aggiorna calendario" title="Aggiorna calendario"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.6 8.3a6.8 6.8 0 1 0-.4 4.6m.5-9.1v4.6h-4.6"/></svg></button>
+      </div>
+    </div>
+    <div id="calendar" aria-label="Calendario degli eventi"></div>
+    <noscript>Abilita JavaScript per visualizzare il calendario.</noscript>
+  </main>
+  <dialog id="details" aria-labelledby="event-title">
+    <form method="dialog">
+      <button class="icon-button close" aria-label="Chiudi dettagli" autofocus><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button>
+    </form>
+    <p class="detail-label">Evento del laboratorio</p>
+    <h2 id="event-title"></h2>
+    <p id="event-time"></p>
+  </dialog>
+</body>
+</html>

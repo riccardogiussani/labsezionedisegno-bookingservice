@@ -1,0 +1,27 @@
+{
+  "name": "lab-calendar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "demo": "node server.mjs --demo",
+    "build": "node build.mjs",
+    "worker:dev": "wrangler dev --port 8787",
+    "worker:dry-run": "wrangler deploy --dry-run --outdir .wrangler/build",
+    "worker:deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "6.1.22",
+    "@fullcalendar/luxon3": "6.1.22",
+    "fullcalendar": "6.1.22",
+    "luxon": "^3.7.2",
+    "node-ical": "^0.27.3"
+  },
+  "devDependencies": {
+    "wrangler": "4.156.2"
+  }
+}
