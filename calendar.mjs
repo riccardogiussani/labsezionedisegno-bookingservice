@@ -41,7 +41,7 @@ export function createCalendarReader(value, storage) {
       const saved = storage?.kv.get('snapshot');
       if (saved) snapshot = { events: parseCalendar(new TextDecoder().decode(saved.source)), fetchedAt: saved.fetchedAt };
     }
-    if (!snapshot) throw new Error('Calendario temporaneamente non disponibile.');
+    if (!snapshot) throw new Error('The calendar is temporarily unavailable.');
     return { ...snapshot, stale: lastAttempt > Date.parse(snapshot.fetchedAt) };
   };
 }
@@ -50,19 +50,19 @@ async function fetchCalendar(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok || !response.body) {
     await response.body?.cancel();
-    throw new Error('Risposta Outlook non valida.');
+    throw new Error('Invalid response from Outlook.');
   }
 
   const chunks = [];
   let size = 0;
   for await (const chunk of response.body) {
     size += chunk.byteLength;
-    if (size > maxFeedBytes) throw new Error('Calendario troppo grande.');
+    if (size > maxFeedBytes) throw new Error('The calendar is too large.');
     chunks.push(chunk);
   }
   const source = Buffer.concat(chunks).toString('utf8').trim();
   if (!/^BEGIN:VCALENDAR\r?\n/i.test(source) || !/\r?\nEND:VCALENDAR$/i.test(source)) {
-    throw new Error('Il link Outlook non ha restituito un calendario ICS.');
+    throw new Error('The Outlook link did not return an ICS calendar.');
   }
   return source;
 }
@@ -86,6 +86,15 @@ export function calendarRange(params) {
     : null;
 }
 
+function calendarText(value) {
+  return (typeof value === 'string' ? value : value?.val ?? '').trim();
+}
+
+function isCanceled(event) {
+  return /^(?:canceled|cancelled)$/i.test(calendarText(event.status))
+    || /^(?:canceled|cancelled|annullato)\s*:/i.test(calendarText(event.summary));
+}
+
 export function eventsInRange(events, from, to) {
   const results = [];
   // The parser uses the runtime's wall clock for date-only and floating values.
@@ -98,7 +107,7 @@ export function eventsInRange(events, from, to) {
   const eventDate = (date, allDay) => DateTime.fromJSDate(date)
     .setZone(timeZone, { keepLocalTime: allDay || !date.tz });
   for (const event of events) {
-    if (event.status === 'CANCELLED') continue;
+    if (isCanceled(event)) continue;
     const useLocalRange = !event.start.tz || event.datetype === 'date' || event.start.dateOnly;
     const instances = ical.expandRecurringEvent(event, {
       from: useLocalRange ? localDate(from) : from.toJSDate(),
@@ -107,15 +116,14 @@ export function eventsInRange(events, from, to) {
     });
 
     for (const instance of instances) {
-      if (instance.event.status === 'CANCELLED') continue;
+      if (instance.isOverride && isCanceled(instance.event)) continue;
       const start = eventDate(instance.start, instance.isFullDay);
       const end = eventDate(instance.end, instance.isFullDay);
       if (!start.isValid || !end.isValid || start >= to || end < from) continue;
       if (end.equals(from) && start < from) continue;
 
-      const summary = typeof instance.summary === 'string' ? instance.summary : instance.summary?.val;
       results.push({
-        title: summary?.trim() || 'Occupato',
+        title: calendarText(instance.summary) || 'Busy',
         start: instance.isFullDay ? start.toISODate() : start.toISO(),
         end: instance.isFullDay ? end.toISODate() : end.toISO(),
         allDay: instance.isFullDay,
@@ -128,27 +136,27 @@ export function eventsInRange(events, from, to) {
 
 export function demoEvents(from, to) {
   const samples = [
-    [0, 9, 120, 'Preparazione laboratorio'],
-    [0, 14, 120, 'Sviluppo prototipo'],
-    [1, 8, 120, 'Esercitazioni XR', 'navy'],
-    [1, 8.5, 240, 'Realtà aumentata', 'gold'],
-    [1, 8, 240, 'Attività di laboratorio', 'navy'],
-    [1, 14.5, 30, 'Aggiornamento progetto'],
-    [2, 8, 240, 'Esercitazioni di laboratorio', 'navy'],
+    [0, 9, 120, 'Lab preparation'],
+    [0, 14, 120, 'Prototype development'],
+    [1, 8, 120, 'XR practice session', 'navy', true],
+    [1, 8.5, 240, 'Augmented reality', 'gold'],
+    [1, 8, 240, 'Lab activities', 'navy'],
+    [1, 14.5, 30, 'Project update'],
+    [2, 8, 240, 'Lab practice session', 'navy', true],
     [2, 14, 180, 'Product Digital Twin'],
-    [3, 9, 420, 'Test visori XR', 'navy'],
-    [3, 10, 120, 'Lezione XR'],
-    [4, 10, 90, 'Riunione settimanale'],
-    [4, 14, 120, 'Revisione attività'],
+    [3, 9, 420, 'XR headset testing', 'navy'],
+    [3, 10, 120, 'XR class'],
+    [4, 10, 90, 'Weekly meeting'],
+    [4, 14, 120, 'Activity review'],
   ];
   const monday = from.startOf('week');
   return [
-    ...samples.map(([day, hour, minutes, title, color]) => {
+    ...samples.map(([day, hour, minutes, title, color, recurring = false]) => {
       const start = monday.plus({ days: day, minutes: hour * 60 });
       return { title, start: start.toISO(), end: start.plus({ minutes }).toISO(),
-        extendedProps: { color, recurring: title.startsWith('Esercitazioni') } };
+        extendedProps: { color, recurring } };
     }),
-    { title: 'Manutenzione programmata', start: monday.plus({ days: 4 }).toISODate(),
+    { title: 'Scheduled maintenance', start: monday.plus({ days: 4 }).toISODate(),
       end: monday.plus({ days: 5 }).toISODate(), allDay: true },
   ].filter((event) => DateTime.fromISO(event.start, { zone: timeZone }) < to
     && DateTime.fromISO(event.end, { zone: timeZone }) > from);

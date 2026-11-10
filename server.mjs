@@ -23,19 +23,19 @@ const server = createServer(async (request, response) => {
   try {
     if (request.method !== 'GET') {
       response.setHeader('Allow', 'GET');
-      return send(response, 405, { error: 'Metodo non consentito.' });
+      return send(response, 405, { error: 'Method not allowed.' });
     }
 
     const { pathname, searchParams } = new URL(request.url, 'http://localhost');
     if (pathname === '/api/events') {
       const range = calendarRange(searchParams);
       if (!range) {
-        return send(response, 400, { error: 'Intervallo di date non valido.' });
+        return send(response, 400, { error: 'Invalid date range.' });
       }
       const { from, to } = range;
       if (demo) return send(response, 200, { demo: true, events: demoEvents(from, to) });
       if (!reader) {
-        return send(response, 503, { error: 'Il calendario Outlook deve essere configurato.' });
+        return send(response, 503, { error: 'The Outlook calendar must be configured.' });
       }
 
       const { events, fetchedAt, stale } = await reader();
@@ -43,11 +43,11 @@ const server = createServer(async (request, response) => {
     }
 
     const asset = frontendAssets.get(pathname === '/' ? '/index.html' : pathname);
-    if (!asset) return send(response, 404, { error: 'Pagina non trovata.' });
+    if (!asset) return send(response, 404, { error: 'Page not found.' });
     const [file, contentType] = asset;
     return send(response, 200, await readFile(new URL(file, import.meta.url)), contentType);
   } catch {
-    return send(response, 503, { error: 'Calendario temporaneamente non disponibile. Riprova tra un minuto.' });
+    return send(response, 503, { error: 'The calendar is temporarily unavailable. Try again in a minute.' });
   }
 });
 

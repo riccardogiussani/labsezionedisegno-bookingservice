@@ -4,7 +4,7 @@ import { frontendAssets } from './frontend-assets.mjs';
 const apiUrl = URL.parse(process.env.CALENDAR_API_URL?.trim() ?? '');
 if (apiUrl?.protocol !== 'https:' || apiUrl.pathname !== '/' || apiUrl.username || apiUrl.password
     || apiUrl.search || apiUrl.hash) {
-  throw new Error('Imposta CALENDAR_API_URL con la sola origine HTTPS pubblica del Worker.');
+  throw new Error('Set CALENDAR_API_URL to the public HTTPS origin of the Worker.');
 }
 
 const dist = new URL('./dist/', import.meta.url);
